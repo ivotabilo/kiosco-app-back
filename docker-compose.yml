@@ -1,0 +1,40 @@
+services:
+  app:
+    # Indica que debe usar el Dockerfile de esta carpeta
+    build: .
+    
+    # Nombre que aparecerá en tu lista de contenedores
+    container_name: kiosco-api
+    
+    # Mapeo de puertos: PUERTO_WINDOWS : PUERTO_DOCKER
+    ports:
+      - "3000:3000"
+    
+    # Configuración de Volúmenes (Sincronización)
+    volumes:
+      - .:/app             # Espeja tu código de Windows a Docker
+      - /app/node_modules  # ESCUDO: Protege los módulos de Linux de los de Windows
+    
+    # Variables de entorno para que Node sepa que estamos en desarrollo
+    environment:
+      - NODE_ENV=development
+      # IMPORTANTE: Dentro de Docker, usás el nombre del servicio "db"
+      - DATABASE_URL=postgresql://myuser:mypassword@db:5432/kiosco_db?schema=public
+    depends_on:
+      - db # Esto le dice a la app que espere a que la DB esté lista
+    # Tu nueva Base de Datos
+  db:
+    image: postgres:15-alpine
+    container_name: kiosco-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: kiosco_db
+    ports:
+      - "5430:5432" # Para que puedas usar Prisma Studio desde Windows
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data: # Esto evita que tus datos se borren al apagar Docker

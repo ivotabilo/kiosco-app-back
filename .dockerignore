@@ -1,0 +1,14 @@
+# Evitamos copiar los módulos de Windows (queremos usar los de Linux dentro de Docker)
+node_modules
+
+# Evitamos copiar archivos de logs y carpetas de compilación
+npm-debug.log
+dist
+build
+
+# No queremos que las variables de entorno locales se metan en la imagen
+.env
+
+# Archivos de Git
+.git
+.gitignore
