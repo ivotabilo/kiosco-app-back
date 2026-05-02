@@ -11,101 +11,110 @@ datasource db {
   provider = "postgresql"
 }
 
+// 2. Modelos de Negocio
+
 model Producto {
-  idProducto Int  @id @default(autoincrement())
-  nombre    String
-  marcaId Int?
-  marca Marca? @relation(fields: [marcaId], references: [idMarca])
-  variantes Variante[]
-
+  idProducto Int        @id @default(autoincrement())
+  codigoRaiz String     @unique          // Ejemplo: "170" (Identifica a todas las Cocas)
+  nombre     String                      // Ejemplo: "Coca Cola"
+  marcaId    Int?
+  marca      Marca?     @relation(fields: [marcaId], references: [idMarca])
+  variantes  Variante[]
 }
 
-model Venta {
-  idVenta   Int             @id @default(autoincrement())
-  fechaHora DateTime        @default(now())
-  total     Int
-  detalles   DetalleVenta[]
-}
-
-model DetalleVenta {
-  id Int @id @default(autoincrement())
-  cantidad Int
-  precio Int
-  ventaId Int
-  venta Venta @relation(fields: [ventaId], references: [idVenta])
-  loteId Int
-  lote Lote @relation(fields: [loteId], references: [idLote])
-}
-model Proveedor {
-  idProveedor Int      @id @default(autoincrement())
-  nombre      String   // Mercado Morón
-  lotes       Lote[]
-}
-model Lote {
-  idLote           Int               @id @default(autoincrement())
-  // Cantidades
-  cantidadPacks    Int               // El "2" de la imagen
-  unidadesPorPack  Int               // (Ej: 6 unidades por pack)
-  cantidadInicial  Int               // Se calcula: packs * unidades
-  cantidadActual   Int               
-  
-  // Costos y Descuentos (Entrada)
-  costoPackBruto   Float             // $ 5.040
-  descuentoPorc    Float?             // 0,40
-  descuentoMonto   Float?             // $ 2.016
-  costoIndividual  Float             // $ 1.512 (El costo real final)
-  
-  // Estado Financiero
-  estadoPago       String            @default("PAGADO") // PAGADO / DEUDA
-  observaciones    String?           // Columna "Detalle2" ($Real 2800)
-  
-  // Tiempos
-  fechaIngreso     DateTime          @default(now())
-  fechaVencimiento DateTime?
-
-  // Relaciones
-  idVariante       String
-  variante         Variante          @relation(fields: [idVariante], references: [codigo], onDelete: Cascade)
-  proveedorId      Int?
-  proveedor        Proveedor?        @relation(fields: [proveedorId], references: [idProveedor])
-  detalles         DetalleVenta[]
-}
 model Variante {
-  codigo            String   @id @unique
-  precioSugerido    Float    // $ 2.268
-  precioVentaU      Float    // $ 3.000
-  precioVentaPack   Float    // $ 6.000
+  idVariante        Int         @id @default(autoincrement())
+  codigoInterno     String      @unique  // Ejemplo: "170A" (Fácil de tipear)
+  codigoBarras      String?     @unique  // EAN de fábrica (Tipeado manual o scanner)
+  descripcion       String?              // Ejemplo: "1.5L Original", "500ml Light"
+  
+  precioSugerido    Float
+  precioVentaU      Float
+  precioVentaPack   Float
+  
   minimoParaReponer Int
   limiteCritico     Int
   estado            EstadoStock @default(ESTABLE)
   
   lotes             Lote[]
   productoId        Int
-  producto          Producto @relation(fields: [productoId], references: [idProducto], onDelete: Cascade)
+  producto          Producto    @relation(fields: [productoId], references: [idProducto], onDelete: Cascade)
 }
-model Marca{
-  idMarca Int @id  @default(autoincrement())
-  nombre String
-  productos Producto[]
+
+model Lote {
+  idLote           Int               @id @default(autoincrement())
+  // Cantidades
+  cantidadPacks    Int               
+  unidadesPorPack  Int               
+  cantidadInicial  Int               
+  cantidadActual   Int               
   
+  // Costos y Descuentos (Entrada)
+  costoPackBruto   Float             
+  descuentoPorc    Float?             
+  descuentoMonto   Float?             
+  costoIndividual  Float             
+  
+  // Estado Financiero
+  estadoPago       EstadoPago        @default(PAGADO)
+  observaciones    String?           
+  
+  // Tiempos
+  fechaIngreso     DateTime          @default(now())
+  fechaVencimiento DateTime?
+
+  // Relaciones
+  idVariante       Int
+  variante         Variante          @relation(fields: [idVariante], references: [idVariante], onDelete: Cascade)
+  proveedorId      Int?
+  proveedor        Proveedor?        @relation(fields: [proveedorId], references: [idProveedor])
+  detalles         DetalleVenta[]
 }
-// 5. Diccionario de Estados
-enum EstadoPago {
-  PAGADO
-  DEUDA
+
+model Proveedor {
+  idProveedor Int      @id @default(autoincrement())
+  nombre      String   
+  lotes       Lote[]
 }
+
+model Marca {
+  idMarca   Int        @id @default(autoincrement())
+  nombre    String
+  productos Producto[]
+}
+
+model Venta {
+  idVenta   Int             @id @default(autoincrement())
+  fechaHora DateTime        @default(now())
+  total     Int
+  detalles  DetalleVenta[]
+}
+
+model DetalleVenta {
+  id       Int    @id @default(autoincrement())
+  cantidad Int
+  precio   Int
+  ventaId  Int
+  venta    Venta  @relation(fields: [ventaId], references: [idVenta])
+  loteId   Int
+  lote     Lote   @relation(fields: [loteId], references: [idLote])
+}
+
+// 3. Diccionarios de Estados (Enums)
+
 enum EstadoStock {
   ESTABLE
   REPONER
   CRITICO
 }
+
+enum EstadoPago {
+  PAGADO
+  DEUDA
+}
+
 enum EstadoVencimiento {
   VIGENTE
   PROXIMO
   VENCIDO
-}
-enum EstadoVenta {
-  EN_PROCESO
-  CONFIRMADA
-  CANCELADA
 }
