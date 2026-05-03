@@ -1,10 +1,16 @@
 import express from "express"
+import { 
+    crearProductoController, 
+    modificarProductoController, 
+    eliminarProductoController 
+} from "../controllers/productos.controllers.js";
+
 const router = express.Router()
 
-router.get('/',(req, res)=>{
-    res.send('por construir 3')
-})
-router.post('/', (req, res)=>{
-    res.send('por construir 4')
-})
-export default router
+router.post("/", crearProductoController);
+router.patch("/:id", modificarProductoController);
+router.delete("/:id", eliminarProductoController);
+
+export default router;
+
+
